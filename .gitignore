@@ -1,0 +1,8 @@
+go.sum
+tmp
+.DS_Store
+.idea/
+example/example
+keystore
+example/conf/channel-artifacts/
+example/conf/crypto-config/

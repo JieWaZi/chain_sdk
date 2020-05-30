@@ -1,0 +1,194 @@
+#
+# Copyright SecureKey Technologies Inc. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+#
+# The network connection profile provides client applications the information about the target
+# blockchain network that are necessary for the applications to interact with it. These are all
+# knowledge that must be acquired from out-of-band sources. This file provides such a source.
+#
+
+
+#
+# Schema version of the content. Used by the SDK to apply the corresponding parsing rules.
+#
+version: 1.0.0
+
+#
+# The client section used by GO SDK.
+#
+client:
+
+  # Which organization does this application instance belong to? The value must be the name of an org
+  # defined under "organizations"
+  organization: org1
+
+  logging:
+    level: debug
+
+  # Root of the MSP directories with keys and certs.
+  cryptoconfig:
+    path: ./conf/crypto-config
+
+   # BCCSP config for the client. Used by GO SDK.
+  BCCSP:
+    security:
+     enabled: true
+     default:
+      provider: "SW"
+     hashAlgorithm: "SHA2"
+     softVerify: true
+     level: 256
+
+channels:
+  # name of the channel
+  mychannel:
+    # Required. list of peers from participating orgs
+    peers:
+      peer0.org1.ryan.blockchain.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.org1.ryan.blockchain.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer0.org2.ryan.blockchain.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.org2.ryan.blockchain.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+#
+# list of participating organizations in this network
+#
+organizations:
+  org1:
+    mspid: Org1MSP
+
+    # This org's MSP store (absolute path or relative to client.cryptoconfig)
+    cryptoPath:  peerOrganizations/org1.ryan.blockchain.com/users/{username}@org1.ryan.blockchain.com/msp
+
+    peers:
+      - peer0.org1.ryan.blockchain.com
+      - peer1.org1.ryan.blockchain.com
+      -
+  org2:
+    mspid: Org2MSP
+
+    cryptoPath: peerOrganizations/org2.ryan.blockchain.com/users/{userName}@org2.ryan.blockchain.com/msp
+
+    peers:
+      - peer0.org2.ryan.blockchain.com
+      - peer1.org2.ryan.blockchain.com
+
+orderers:
+  orderer.ryan.blockchain.com:
+    url: orderer.ryan.blockchain.com:7050
+    tlsCACerts:
+      path: ./conf/crypto-config/ordererOrganizations/ryan.blockchain.com/tlsca/tlsca.ryan.blockchain.com-cert.pem
+
+
+#
+# List of peers to send various requests to, including endorsement, query
+# and event listener registration.
+#
+peers:
+  peer0.org1.ryan.blockchain.com:
+    # this URL is used to send endorsement and query requests
+    url: peer0.org1.ryan.blockchain.com:7051
+    # eventUrl is only needed when using eventhub (default is delivery service)
+    eventUrl: peer0.org1.ryan.blockchain.com:7053
+
+    grpcOptions:
+      ssl-target-name-override: peer0.org1.ryan.blockchain.com
+      keep-alive-time: 10s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+
+    tlsCACerts:
+      # Certificate location absolute path
+      path: ./conf/crypto-config/peerOrganizations/org1.ryan.blockchain.com/tlsca/tlsca.org1.ryan.blockchain.com-cert.pem
+
+  peer1.org1.ryan.blockchain.com:
+    # this URL is used to send endorsement and query requests
+    url: peer1.org1.ryan.blockchain.com:8051
+    # eventUrl is only needed when using eventhub (default is delivery service)
+    eventUrl: peer1.org1.ryan.blockchain.com:8053
+
+    grpcOptions:
+      ssl-target-name-override: peer1.org1.ryan.blockchain.com
+      keep-alive-time: 10s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+
+    tlsCACerts:
+      # Certificate location absolute path
+      path: ./conf/crypto-config/peerOrganizations/org1.ryan.blockchain.com/tlsca/tlsca.org1.ryan.blockchain.com-cert.pem
+
+  peer0.org2.ryan.blockchain.com:
+    # this URL is used to send endorsement and query requests
+    url:   peer0.org2.ryan.blockchain.com:9051
+    # eventUrl is only needed when using eventhub (default is delivery service)
+    eventUrl: peer0.org2.ryan.blockchain.com:9053
+
+    grpcOptions:
+      ssl-target-name-override: peer0.org2.ryan.blockchain.com
+      keep-alive-time: 10s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+
+    tlsCACerts:
+      # Certificate location absolute path
+      path: ./conf/crypto-config/peerOrganizations/org2.ryan.blockchain.com/tlsca/tlsca.org2.ryan.blockchain.com-cert.pem
+
+  peer1.org2.ryan.blockchain.com:
+    # this URL is used to send endorsement and query requests
+    url:   peer1.org2.ryan.blockchain.com:10051
+    # eventUrl is only needed when using eventhub (default is delivery service)
+    eventUrl: peer1.org2.ryan.blockchain.com:10053
+
+    grpcOptions:
+      ssl-target-name-override: peer1.org2.ryan.blockchain.com
+      keep-alive-time: 10s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+
+    tlsCACerts:
+      # Certificate location absolute path
+      path: ./conf/crypto-config/peerOrganizations/org2.ryan.blockchain.com/tlsca/tlsca.org2.ryan.blockchain.com-cert.pem
+
+entityMatchers:
+  peer:
+    - pattern: peer0.org1.ryan.blockchain.com
+      urlSubstitutionExp: peer0.org1.ryan.blockchain.com:7051
+      sslTargetOverrideUrlSubstitutionExp: peer0.org1.ryan.blockchain.com
+      mappedHost: peer0.org1.ryan.blockchain.com
+    - pattern: peer1.org1.ryan.blockchain.com
+      urlSubstitutionExp: peer1.org1.ryan.blockchain.com:8051
+      sslTargetOverrideUrlSubstitutionExp: peer1.org1.ryan.blockchain.com
+      mappedHost: peer1.org1.ryan.blockchain.com
+    - pattern: peer1.org1.ryan.blockchain.com
+      urlSubstitutionExp: peer0.org2.ryan.blockchain.com:9051
+      sslTargetOverrideUrlSubstitutionExp: peer0.org2.ryan.blockchain.com
+      mappedHost: peer0.org2.ryan.blockchain.com
+    - pattern: peer0.org2.ryan.blockchain.com
+      urlSubstitutionExp: peer1.org2.ryan.blockchain.com:10051
+      sslTargetOverrideUrlSubstitutionExp: peer1.org2.ryan.blockchain.com
+      mappedHost: peer1.org2.ryan.blockchain.com
