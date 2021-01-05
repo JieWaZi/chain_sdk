@@ -2,13 +2,13 @@ package base
 
 import (
 	"encoding/hex"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset/kvrwset"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/sirupsen/logrus"
 )
@@ -17,6 +17,15 @@ type BlockchainInfo struct {
 	Height            uint64 `json:"height,omitempty"`
 	CurrentBlockHash  string `json:"current_block_hash,omitempty"`
 	PreviousBlockHash string `json:"previous_block_hash,omitempty"`
+}
+
+func UnmarshalBlockchainInfo(raw []byte) (*BlockchainInfo, error) {
+	in := &common.BlockchainInfo{}
+	err := proto.Unmarshal(raw, in)
+	if err != nil {
+		return nil, err
+	}
+	return DecodeBlockchainInfo(in)
 }
 
 func DecodeBlockchainInfo(in *common.BlockchainInfo) (*BlockchainInfo, error) {
@@ -1254,6 +1263,12 @@ func DecodeKVMetadataEntry(in *kvrwset.KVMetadataEntry) (*KVMetadataEntry, error
 	return out, nil
 }
 
+type CollectionHashedReadWriteSet struct {
+	CollectionName string `json:"collection_name,omitempty"`
+	HashedRwset    []byte `json:"hashed_rwset,omitempty"`
+	PvtRwsetHash   []byte `json:"pvt_rwset_hash,omitempty"`
+}
+
 func DecodeCollectionHashedReadWriteSet(in *rwset.CollectionHashedReadWriteSet) (*CollectionHashedReadWriteSet, error) {
 	if in == nil {
 		return nil, nil
@@ -1266,8 +1281,176 @@ func DecodeCollectionHashedReadWriteSet(in *rwset.CollectionHashedReadWriteSet) 
 	return out, nil
 }
 
-type CollectionHashedReadWriteSet struct {
-	CollectionName string `json:"collection_name,omitempty"`
-	HashedRwset    []byte `json:"hashed_rwset,omitempty"`
-	PvtRwsetHash   []byte `json:"pvt_rwset_hash,omitempty"`
+type ChannelQueryResponse struct {
+	Channels []*ChannelInfo `json:"channels,omitempty"`
+}
+
+func UnmarshalChannelQueryResponse(raw []byte) (*ChannelQueryResponse, error) {
+	in := &peer.ChannelQueryResponse{}
+	err := proto.Unmarshal(raw, in)
+	if err != nil {
+		return nil, err
+	}
+	return DecodeChannelQueryResponse(in)
+}
+
+func DecodeChannelQueryResponse(in *peer.ChannelQueryResponse) (*ChannelQueryResponse, error) {
+	if in == nil {
+		return nil, nil
+	}
+	out := &ChannelQueryResponse{}
+	for _, inChannel := range in.Channels {
+		outChannel, err := DecodeChannelInfo(inChannel)
+		if err != nil {
+			logrus.Errorf("failed to decode inChannel(%+v): %v", inChannel, err)
+		} else {
+			out.Channels = append(out.Channels, outChannel)
+		}
+	}
+	return out, nil
+}
+
+type ChannelInfo struct {
+	ChannelId string `json:"channel_id,omitempty"`
+}
+
+func UnmarshalChannelInfo(raw []byte) (*ChannelInfo, error) {
+	in := &peer.ChannelInfo{}
+	err := proto.Unmarshal(raw, in)
+	if err != nil {
+		return nil, err
+	}
+	return DecodeChannelInfo(in)
+}
+
+func DecodeChannelInfo(in *peer.ChannelInfo) (*ChannelInfo, error) {
+	if in == nil {
+		return nil, nil
+	}
+	out := &ChannelInfo{
+		ChannelId: in.ChannelId,
+	}
+	return out, nil
+}
+
+type ChaincodeQueryResponse struct {
+	Chaincodes []*ChaincodeInfo `json:"chaincodes,omitempty"`
+}
+
+func UnmarshalChaincodeQueryResponse(raw []byte) (*ChaincodeQueryResponse, error) {
+	in := &peer.ChaincodeQueryResponse{}
+	err := proto.Unmarshal(raw, in)
+	if err != nil {
+		return nil, err
+	}
+	return DecodeChaincodeQueryResponse(in)
+}
+
+func DecodeChaincodeQueryResponse(in *peer.ChaincodeQueryResponse) (*ChaincodeQueryResponse, error) {
+	if in == nil {
+		return nil, nil
+	}
+	out := &ChaincodeQueryResponse{}
+	for _, inChaincode := range in.Chaincodes {
+		outChaincode, err := DecodeChaincodeInfo(inChaincode)
+		if err != nil {
+			logrus.Errorf("failed to decode inChaincode(%+v): %v", inChaincode, err)
+		} else {
+			out.Chaincodes = append(out.Chaincodes, outChaincode)
+		}
+	}
+	return out, nil
+}
+
+type ChaincodeInfo struct {
+	Name    string `json:"name,omitempty"`
+	Version string `json:"version,omitempty"`
+	Path    string `json:"path,omitempty"`
+	Input   string `json:"input,omitempty"`
+	Escc    string `json:"escc,omitempty"`
+	Vscc    string `json:"vscc,omitempty"`
+	Id      string `json:"id,omitempty"`
+}
+
+func UnmarshalChaincodeInfo(raw []byte) (*ChaincodeInfo, error) {
+	in := &peer.ChaincodeInfo{}
+	err := proto.Unmarshal(raw, in)
+	if err != nil {
+		return nil, err
+	}
+	return DecodeChaincodeInfo(in)
+}
+
+func DecodeChaincodeInfo(in *peer.ChaincodeInfo) (*ChaincodeInfo, error) {
+	if in == nil {
+		return nil, nil
+	}
+	out := &ChaincodeInfo{
+		Name:    in.Name,
+		Version: in.Version,
+		Path:    in.Path,
+		Input:   in.Input,
+		Escc:    in.Escc,
+		Vscc:    in.Vscc,
+		Id:      hex.EncodeToString(in.Id),
+	}
+	return out, nil
+}
+
+// InstallCCResponse contains install chaincode response status
+type InstallCCResponse struct {
+	Target string `json:"target,omitempty"`
+	Status int32  `json:"status,omitempty"`
+	Info   string `json:"info,omitempty"`
+}
+
+func DecodeInstallCCResponse(in []resmgmt.InstallCCResponse) ([]InstallCCResponse, error) {
+	var out []InstallCCResponse
+	if len(in) == 0 {
+		return nil, nil
+	}
+	for i := range in {
+		out = append(out, InstallCCResponse{
+			Target: in[i].Target,
+			Status: in[i].Status,
+			Info:   in[i].Info,
+		})
+	}
+	return out, nil
+}
+
+// InstantiateCCResponse contains response parameters for instantiate chaincode
+type InstantiateCCResponse struct {
+	TransactionID string `json:"transactionID,omitempty"`
+}
+
+func DecodeInstantiateCCResponse(in resmgmt.InstantiateCCResponse) (*InstantiateCCResponse, error) {
+	out := &InstantiateCCResponse{
+		TransactionID: string(in.TransactionID),
+	}
+	return out, nil
+}
+
+// SaveChannelResponse contains response parameters for save channel
+type SaveChannelResponse struct {
+	TransactionID string `json:"transactionID,omitempty"`
+}
+
+func DecodeSaveChannelResponse(in resmgmt.SaveChannelResponse) (*SaveChannelResponse, error) {
+	out := &SaveChannelResponse{
+		TransactionID: string(in.TransactionID),
+	}
+	return out, nil
+}
+
+// UpgradeCCResponse contains response parameters for upgrade chaincode
+type UpgradeCCResponse struct {
+	TransactionID string `json:"transactionID,omitempty"`
+}
+
+func DecodeUpgradeCCResponse(in resmgmt.UpgradeCCResponse) (*UpgradeCCResponse, error) {
+	out := &UpgradeCCResponse{
+		TransactionID: string(in.TransactionID),
+	}
+	return out, nil
 }

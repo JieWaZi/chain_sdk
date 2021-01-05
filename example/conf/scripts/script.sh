@@ -24,7 +24,7 @@ NO_CHAINCODE="$6"
 LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=10
-CC_SRC_PATH="github.com/chaincode/vehicle/"
+CC_SRC_PATH="github.com/chaincode/constraint/"
 
 echo "Channel name : "$CHANNEL_NAME
 

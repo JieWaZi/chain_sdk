@@ -6,3 +6,4 @@ example/example
 keystore
 example/conf/channel-artifacts/
 example/conf/crypto-config/
+example/conf/chaincode
